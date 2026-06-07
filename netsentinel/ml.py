@@ -35,7 +35,7 @@ class Prediction:
 class MLService:
     def __init__(self, model_path: Path) -> None:
         self.model_path = model_path
-        self.model, self.version = self._load_or_bootstrap(model_path)
+        self.model, self.version, self.metadata = self._load_or_bootstrap(model_path)
 
     def predict(self, features: list[FeatureVector]) -> list[Prediction]:
         if not features:
@@ -51,10 +51,11 @@ class MLService:
             for prediction, score in zip(predictions, decision_scores, strict=True)
         ]
 
-    def _load_or_bootstrap(self, model_path: Path) -> tuple[IsolationForest, str]:
+    def _load_or_bootstrap(self, model_path: Path) -> tuple[IsolationForest, str, dict]:
         if model_path.exists():
             payload = joblib.load(model_path)
-            return payload["model"], payload["version"]
+            metadata = payload.get("metadata", {})
+            return payload["model"], payload["version"], metadata
 
         model = IsolationForest(
             contamination=0.08,
@@ -70,8 +71,14 @@ class MLService:
                 "samples": len(baseline),
             }
         )[:12]
-        joblib.dump({"model": model, "version": version}, model_path)
-        return model, version
+        metadata = {
+            "version": version,
+            "feature_columns": FEATURE_COLUMNS,
+            "source": "synthetic-bootstrap",
+            "n_train_samples": len(baseline),
+        }
+        joblib.dump({"model": model, "version": version, "metadata": metadata}, model_path)
+        return model, version, metadata
 
     @staticmethod
     def _synthetic_baseline(samples: int = 2000) -> np.ndarray:

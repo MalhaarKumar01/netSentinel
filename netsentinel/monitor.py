@@ -150,6 +150,7 @@ class NetSentinelMonitor:
             updated_at=utc_now(),
             capture_mode=self.settings.capture_mode,
             model_version=self.ml_service.version,
+            model_metadata=self.ml_service.metadata,
             packets_processed=self.packets_processed,
             flows_seen=self.flow_engine.total_flows_seen,
             alerts_generated=self.alerts_generated,

@@ -84,6 +84,7 @@ class HealthStatus(BaseModel):
     updated_at: datetime
     capture_mode: str
     model_version: str
+    model_metadata: dict[str, Any] = Field(default_factory=dict)
     packets_processed: int = 0
     flows_seen: int = 0
     alerts_generated: int = 0
